@@ -3,10 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pretodev/inhireapp/config/env"
 )
 
 var (
@@ -31,18 +33,15 @@ CREATE TABLE IF NOT EXISTS jobs(
 );
 `
 
-func Connect(ctx context.Context) *sql.DB {
-	once.Do(func() {
-		var err error
-		db, err = sql.Open("sqlite3", "file:example.db?cache=shared&mode=rwc")
-		if err != nil {
-			log.Fatalf("failed to open database: %v", err)
-		}
-		_, err = db.ExecContext(ctx, schema)
-		if err != nil {
-			log.Fatalf("failed to create schema: %v", err)
-		}
-	})
-
-	return db
+func OpenConn(ctx context.Context, cfg env.Config) (*sql.DB, error) {
+	source := fmt.Sprintf("file:%s?cache=shared&mode=rwc", cfg.SQLiteDBPath)
+	db, err := sql.Open("sqlite3", source)
+	if err != nil {
+		log.Fatalf("failed to open database: %v", err)
+	}
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	_, err = db.ExecContext(ctx, schema)
+	return db, err
 }

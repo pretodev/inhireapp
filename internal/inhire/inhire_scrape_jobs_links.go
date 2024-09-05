@@ -6,7 +6,7 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/pretodev/inhire-search/pkg/google"
+	"github.com/pretodev/inhireapp/pkg/google"
 )
 
 func scrapeJobsLinks() ([]string, error) {

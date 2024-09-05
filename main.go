@@ -10,9 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pretodev/inhire-search/internal/inhire"
-	"github.com/pretodev/inhire-search/pkg/browser"
-	"github.com/pretodev/inhire-search/pkg/db"
+	"github.com/pretodev/inhireapp/config/db"
+	"github.com/pretodev/inhireapp/config/env"
+	"github.com/pretodev/inhireapp/internal/inhire"
+	"github.com/pretodev/inhireapp/pkg/browser"
+	"github.com/sethvargo/go-envconfig"
 )
 
 func main() {
@@ -37,7 +39,15 @@ func main() {
 		cancel()
 	}()
 
-	dblocal := db.Connect(ctx)
+	var cfg env.Config
+	if err := envconfig.Process(ctx, &cfg); err != nil {
+		log.Fatalf("failed to load env variables: %v", err)
+	}
+
+	dblocal, err := db.OpenConn(ctx, cfg)
+	if err != nil {
+		log.Fatalf("failted to connect database: %v", err)
+	}
 
 	instore := inhire.NewStore(dblocal)
 	insrv := inhire.NewService(instore)
