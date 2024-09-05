@@ -21,10 +21,18 @@ func main() {
 	downjobscdm := flag.NewFlagSet("download-jobs", flag.ExitOnError)
 	downlinkscdm := flag.NewFlagSet("download-links", flag.ExitOnError)
 	jobscdm := flag.NewFlagSet("jobs", flag.ExitOnError)
+	versioncdm := flag.NewFlagSet("version", flag.ExitOnError)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Comando esperado: update ou find")
 		os.Exit(1)
+	}
+
+	cmdName := os.Args[1]
+	if cmdName == "version" {
+		versioncdm.Parse(os.Args[2:])
+		fmt.Println("inhire app: v0.0.1")
+		return
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -81,7 +89,6 @@ func main() {
 		},
 	}
 
-	cmdName := os.Args[1]
 	cmd, exists := commands[cmdName]
 	if !exists {
 		log.Printf("Comando não reconhecido: %s\n", cmdName)
