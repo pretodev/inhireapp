@@ -39,7 +39,7 @@ func OpenConn(ctx context.Context, cfg env.Config) (*sql.DB, error) {
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
-	if err = db.Ping(); err != nil {
+	if err = db.PingContext(ctx); err != nil {
 		return nil, err
 	}
 	_, err = db.ExecContext(ctx, schema)
