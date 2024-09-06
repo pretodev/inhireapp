@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/pretodev/inhireapp/config/chromium"
 	"github.com/pretodev/inhireapp/config/db"
 	"github.com/pretodev/inhireapp/config/env"
 	"github.com/pretodev/inhireapp/internal/inhire"
-	"github.com/pretodev/inhireapp/pkg/browser"
 	"github.com/sethvargo/go-envconfig"
 )
 
@@ -59,7 +59,7 @@ func main() {
 
 	commands := map[string]func(ctx context.Context) error{
 		"download-jobs": func(ctx context.Context) error {
-			browserCtx, cancel := browser.WithBrowserContext(ctx)
+			browserCtx, cancel := chromium.NewExecAllocator(ctx, cfg)
 			defer cancel()
 			return insrv.UpdateJobInfos(browserCtx)
 		},
