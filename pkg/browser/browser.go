@@ -16,6 +16,7 @@ func WithBrowserContext(ctx context.Context) (context.Context, context.CancelFun
 		chromedp.Flag("mute-audio", true),
 		chromedp.Flag("headless", headless),
 		chromedp.Flag("user-agent", userAgent),
+		chromedp.Flag("no-sandbox", true),
 	)
 	return chromedp.NewExecAllocator(ctx, opts...)
 }
