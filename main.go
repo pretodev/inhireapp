@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/pretodev/inhireapp/config/db"
 	"github.com/pretodev/inhireapp/config/env"
@@ -18,20 +16,14 @@ import (
 )
 
 func main() {
-	downjobscdm := flag.NewFlagSet("download-jobs", flag.ExitOnError)
-	downlinkscdm := flag.NewFlagSet("download-links", flag.ExitOnError)
-	jobscdm := flag.NewFlagSet("jobs", flag.ExitOnError)
-	versioncdm := flag.NewFlagSet("version", flag.ExitOnError)
-
 	if len(os.Args) < 2 {
-		fmt.Println("Comando esperado: update ou find")
+		fmt.Println("expected command: update|find|version")
 		os.Exit(1)
 	}
 
 	cmdName := os.Args[1]
 	if cmdName == "version" {
-		versioncdm.Parse(os.Args[2:])
-		fmt.Println("inhire app: v0.0.1")
+		fmt.Println("inhire web crawler: v0.0.1")
 		return
 	}
 
@@ -43,7 +35,7 @@ func main() {
 
 	go func() {
 		<-sigs
-		fmt.Println("\nSinal de interrupção recebido, encerrando...")
+		fmt.Println("shutdown...")
 		cancel()
 	}()
 
@@ -52,23 +44,26 @@ func main() {
 		log.Fatalf("failed to load env variables: %v", err)
 	}
 
-	dblocal, err := db.OpenConn(ctx, cfg)
+	db, err := db.OpenConn(ctx, cfg)
+	defer func() {
+		if errClose := db.Close(); errClose != nil {
+			log.Fatalf("failed close database: %v", errClose)
+		}
+	}()
 	if err != nil {
-		log.Fatalf("failted to connect database: %v", err)
+		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	instore := inhire.NewStore(dblocal)
+	instore := inhire.NewStore(db)
 	insrv := inhire.NewService(instore)
 
 	commands := map[string]func(ctx context.Context) error{
 		"download-jobs": func(ctx context.Context) error {
-			downjobscdm.Parse(os.Args[2:])
 			browserCtx, cancel := browser.WithBrowserContext(ctx)
 			defer cancel()
 			return insrv.UpdateJobInfos(browserCtx)
 		},
 		"download-links": func(ctx context.Context) error {
-			downlinkscdm.Parse(os.Args[2:])
 			links, err := insrv.UpdateJobLinks(ctx)
 			if err != nil {
 				return err
@@ -77,7 +72,6 @@ func main() {
 			return nil
 		},
 		"jobs": func(ctx context.Context) error {
-			jobscdm.Parse(os.Args[2:])
 			jobs, err := instore.CachedJobs(ctx)
 			if err != nil {
 				return err
@@ -91,7 +85,7 @@ func main() {
 
 	cmd, exists := commands[cmdName]
 	if !exists {
-		log.Printf("Comando não reconhecido: %s\n", cmdName)
+		log.Printf("not found command: %s\n", cmdName)
 		os.Exit(1)
 	}
 
@@ -99,7 +93,4 @@ func main() {
 		log.Fatalf("Erro ao executar o comando %s: %v\n", cmdName, err)
 		os.Exit(2)
 	}
-
-	fmt.Println("Encerrando...")
-	time.Sleep(1 * time.Second)
 }
