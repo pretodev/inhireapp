@@ -5,16 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pretodev/inhireapp/config/env"
 )
 
-var (
-	db   *sql.DB
-	once sync.Once
-)
+var db *sql.DB
 
 const schema = `
 CREATE TABLE IF NOT EXISTS links(
